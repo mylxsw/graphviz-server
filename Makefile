@@ -4,9 +4,15 @@ DIR := $(shell pwd)
 LDFLAGS := -s -w -X main.Version=$(Version) -X main.GitCommit=$(GitCommit)
 
 run: build
-	./build/debug/graphviz-server
+	./build/debug/graphviz-server --debug
 
-build:
+build: esc-build
 	go build -race -ldflags "$(LDFLAGS)" -o build/debug/graphviz-server main.go
 
-.PHONY: run build
+esc-build:
+	esc -pkg api -o api/static.go -prefix=assets assets
+
+docker-build:
+	docker build -t mylxsw/graphviz-server .
+
+.PHONY: run build docker-build esc-build

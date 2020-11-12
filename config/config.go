@@ -10,6 +10,7 @@ type Config struct {
 	Listen  string `json:"listen"`
 	DotBin  string `json:"dot_bin"`
 	TempDir string `json:"temp_dir"`
+	Debug   bool   `json:"debug"`
 }
 
 func (conf *Config) Serialize() string {

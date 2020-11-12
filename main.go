@@ -36,6 +36,10 @@ func main() {
 		Usage: "临时文件存储目录",
 		Value: "/tmp",
 	}))
+	app.AddFlags(altsrc.NewBoolFlag(cli.BoolFlag{
+		Name:  "debug",
+		Usage: "是否使用调试模式，调试模式下，静态资源使用本地文件",
+	}))
 
 	app.WithHttpServer(listener.FlagContext("listen"))
 	app.WebAppExceptionHandler(func(ctx web.Context, err interface{}) web.Response {
@@ -48,6 +52,7 @@ func main() {
 			Listen:  c.String("listen"),
 			DotBin:  c.String("dot-bin"),
 			TempDir: c.String("tmpdir"),
+			Debug:   c.Bool("debug"),
 		}
 	})
 

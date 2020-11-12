@@ -25,6 +25,7 @@ func (s ServiceProvider) Boot(app infra.Glacier) {
 			router.PathPrefix("/health").Handler(HealthCheck{})
 
 			router.PathPrefix("/resources").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir(filepath.Join(conf.TempDir, "graphviz")))))
+			router.PathPrefix("/dashboard").Handler(http.StripPrefix("/dashboard", http.FileServer(FS(conf.Debug))))
 		})
 	})
 }

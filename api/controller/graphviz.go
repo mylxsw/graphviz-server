@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mylxsw/asteria/log"
 	"github.com/mylxsw/container"
@@ -46,7 +48,15 @@ func (g GraphvizController) createImageDef(ctx web.Context, conf *config.Config)
 		return ctx.JSONError(err.Error(), http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(web.M{"url": fmt.Sprintf("/api/preview/%s.%s", finger, fileType)})
+	imagePreviewURL := fmt.Sprintf("/api/preview/%s.%s", finger, fileType)
+
+	resp := web.M{"image": imagePreviewURL}
+	if fileType == "svg" {
+		resp["preview-interact"] = fmt.Sprintf("/dashboard/index.html?url=%s", imagePreviewURL)
+		resp["preview-sketch"] = fmt.Sprintf("/dashboard/index.html?url=%s&t=sketch&roughness=0", imagePreviewURL)
+	}
+
+	return ctx.JSON(resp)
 }
 
 func (g GraphvizController) rebuildImageFromDefinition(conf *config.Config, definition []byte, filetype string) (string, error) {
@@ -79,7 +89,11 @@ func (g GraphvizController) rebuildImage(conf *config.Config, finger string, fil
 
 	// 创建图片文件
 	_ = os.MkdirAll(filepath.Join(conf.TempDir, "graphviz"), os.ModePerm)
-	dotCmd := exec.Command(conf.DotBin, "-T"+filetype, "-o", outputFilepath, sourceFilepath)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
+	defer cancel()
+
+	dotCmd := exec.CommandContext(ctx, conf.DotBin, "-T"+filetype, "-o", outputFilepath, sourceFilepath)
 	stdout, err := dotCmd.Output()
 	if err != nil {
 		_ = os.Remove(sourceFilepath)

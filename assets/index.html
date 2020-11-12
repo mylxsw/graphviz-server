@@ -1,0 +1,42 @@
+ <html>
+	<head>
+        <title>SVG Preview</title>
+		<link rel="stylesheet" href="https://libs.cdnjs.net/twitter-bootstrap/3.3.4/css/bootstrap.css">
+		<link rel="stylesheet" href="/dashboard/graphviz-svg/css/graphviz.svg.css">
+	</head>
+	<body>
+		<div id="instructions">
+			<p>1. 点击节点高亮显示</p>
+			<p>2. Shift-scroll 缩放</p>
+			<p>3. Esc 取消高亮</p>
+		</div>
+		<div id="graph"></div>
+
+		<script type="text/javascript" src="https://libs.cdnjs.net/jquery/2.2.3/jquery.js"></script>
+		<script type="text/javascript" src="https://libs.cdnjs.net/jquery-mousewheel/3.1.9/jquery.mousewheel.js"></script>
+		<script type="text/javascript" src="https://libs.cdnjs.net/jquery-color/2.0.0/jquery.color.js"></script>
+		<script type="text/javascript" src="https://libs.cdnjs.net/twitter-bootstrap/3.3.4/js/bootstrap.js"></script>
+		<script type="text/javascript" src="/dashboard/graphviz-svg/js/jquery.graphviz.svg.js"></script>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/rough.js/3.1.0/rough.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/gangtao/sketchify/dist/sketchify.min.js"></script>
+
+		<script type="text/javascript" src="/dashboard/graphbiz-server.js"></script>
+		<script type="text/javascript">
+ 			$(document).ready(function(){
+ 				switch (getQueryString('t')) {
+ 					case 'sketch':
+ 						$('#instructions').hide();
+						$.get(getQueryString('url'), null, function(data) {
+							let container = $('#graph');
+							container.html(document.adoptNode($("svg", data)[0]));
+							sketchMode(container[0], getQueryString('roughness'));
+						}, "xml");
+ 						break;
+					default:
+						interactMode('#graph', getQueryString('url'));
+				}
+            });
+		</script>
+	</body>
+</html>
