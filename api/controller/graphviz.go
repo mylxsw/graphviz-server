@@ -20,25 +20,30 @@ import (
 )
 
 type GraphvizController struct {
-	cc container.Container
+	cc   container.Container
+	conf *config.Config
 }
 
 func NewGraphvizController(cc container.Container) web.Controller {
-	return &GraphvizController{cc: cc}
+	conf := config.Get(cc)
+	_ = os.MkdirAll(filepath.Join(conf.TempDir, "sources"), os.ModePerm)
+	_ = os.MkdirAll(filepath.Join(conf.TempDir, "graphviz"), os.ModePerm)
+	return &GraphvizController{cc: cc, conf: conf}
 }
+
 func (g GraphvizController) Register(router *web.Router) {
 	router.Group("/graphviz", func(router *web.Router) {
-		router.Post("/", g.createImageDef)
-		router.Get("/realtime/", g.realTimeImageCreate)
-		router.Post("/realtime/", g.realTimeImageCreate)
+		router.Post("/definition", g.AddImageDefinition)
+		router.Any("/stream", g.RenderImageAsStream)
 	})
 
-	router.Get("/preview/{id}", g.getImage)
+	router.Get("/preview/{id}", g.LoadImage)
 }
 
 var supportFileTypes = []string{"svg", "svgz", "webp", "png", "bmp", "jpg", "jpeg", "pdf", "gif"}
 
-func (g GraphvizController) realTimeImageCreate(ctx web.Context, conf *config.Config) web.Response {
+// RenderImageAsStream 直接返回指定的 Graph 定义生成的图形二进制
+func (g GraphvizController) RenderImageAsStream(ctx web.Context) web.Response {
 	fileType := strings.ToLower(ctx.InputWithDefault("type", "svg"))
 	if !in(fileType, supportFileTypes) {
 		return ctx.JSONError(fmt.Sprintf("invalid type, only support: %s", strings.Join(supportFileTypes, ",")), http.StatusUnprocessableEntity)
@@ -51,7 +56,7 @@ func (g GraphvizController) realTimeImageCreate(ctx web.Context, conf *config.Co
 		def = ctx.Body()
 	}
 
-	stream, err := g.buildImageAsStream(conf, def, fileType)
+	stream, err := g.buildImageAsStream(def, fileType)
 	if err != nil {
 		return ctx.JSONError(fmt.Sprintf("can not create image from definition: %v", err), http.StatusInternalServerError)
 	}
@@ -71,21 +76,22 @@ func (g GraphvizController) realTimeImageCreate(ctx web.Context, conf *config.Co
 	})
 }
 
-func (g GraphvizController) createImageDef(ctx web.Context, conf *config.Config) web.Response {
+// AddImageDefinition 添加图片定义
+func (g GraphvizController) AddImageDefinition(ctx web.Context) web.Response {
 	graphDef := ctx.Body()
 	fileType := strings.ToLower(ctx.InputWithDefault("type", "svg"))
 	if !in(fileType, supportFileTypes) {
 		return ctx.JSONError(fmt.Sprintf("invalid type, only support: %s", strings.Join(supportFileTypes, ",")), http.StatusUnprocessableEntity)
 	}
 
-	finger, err := g.rebuildImageFromDefinition(conf, graphDef, fileType)
+	fileID, err := g.updateImageDefinition(strings.TrimSpace(ctx.Input("id")), graphDef, fileType)
 	if err != nil {
 		return ctx.JSONError(err.Error(), http.StatusInternalServerError)
 	}
 
-	imagePreviewURL := fmt.Sprintf("/api/preview/%s.%s", finger, fileType)
+	imagePreviewURL := fmt.Sprintf("/api/preview/%s", fileID)
 
-	resp := web.M{"image": imagePreviewURL}
+	resp := web.M{"preview": imagePreviewURL, "id": fileID}
 	if fileType == "svg" {
 		resp["preview-interact"] = fmt.Sprintf("/dashboard/index.html?url=%s", imagePreviewURL)
 		resp["preview-sketch"] = fmt.Sprintf("/dashboard/index.html?url=%s&t=sketch&roughness=0", imagePreviewURL)
@@ -94,38 +100,51 @@ func (g GraphvizController) createImageDef(ctx web.Context, conf *config.Config)
 	return ctx.JSON(resp)
 }
 
-func (g GraphvizController) rebuildImageFromDefinition(conf *config.Config, definition []byte, filetype string) (string, error) {
-	finger := fmt.Sprintf("%x", md5.Sum(definition))
-	if !fileExist(filepath.Join(conf.TempDir, "graphviz", finger)) {
-		sourceFilepath := filepath.Join(conf.TempDir, "sources", finger+".dot")
-		if !fileExist(sourceFilepath) {
-			// 生成用户输入的临时文件
-			_ = os.MkdirAll(filepath.Join(conf.TempDir, "sources"), os.ModePerm)
-			if err := ioutil.WriteFile(sourceFilepath, definition, os.ModePerm); err != nil {
-				return "", fmt.Errorf("write temp file failed for source: %w", err)
-			}
-		}
-
-		if err := g.rebuildImage(conf, finger, filetype); err != nil {
-			return "", fmt.Errorf("rebuild image failed: %w", err)
-		}
-	}
-
-	return finger, nil
+func (g GraphvizController) buildSourcePath(name string) string {
+	return filepath.Join(g.conf.TempDir, "sources", name)
 }
 
-func (g GraphvizController) buildImageAsStream(conf *config.Config, def []byte, filetype string) ([]byte, error) {
-	finger := fmt.Sprintf("%x", md5.Sum(def))
-	sourceFilepath := filepath.Join(conf.TempDir, "sources", fmt.Sprintf("%s-%d.dot", finger, time.Now().Unix()))
-	if err := ioutil.WriteFile(sourceFilepath, def, os.ModePerm); err != nil {
+func (g GraphvizController) buildTargetPath(name string) string {
+	return filepath.Join(g.conf.TempDir, "graphviz", name)
+}
+
+func (g GraphvizController) createDefinitionFinger(def []byte, id string) string {
+	if id != "" {
+		return id
+	}
+
+	return fmt.Sprintf("%x", md5.Sum(def))
+}
+
+func (g GraphvizController) sourceExisted(name string) bool {
+	return fileExist(g.buildSourcePath(name))
+}
+
+func (g GraphvizController) targetExisted(name string) bool {
+	return fileExist(g.buildTargetPath(name))
+}
+
+func (g GraphvizController) updateImageDefinition(id string, definition []byte, filetype string) (string, error) {
+	finger := g.createDefinitionFinger(definition, id)
+	if err := ioutil.WriteFile(g.buildSourcePath(finger+".dot"), definition, os.ModePerm); err != nil {
+		return "", fmt.Errorf("write temp file failed for source: %w", err)
+	}
+
+	return g.rebuildImage(finger, filetype)
+}
+
+func (g GraphvizController) buildImageAsStream(def []byte, filetype string) ([]byte, error) {
+	finger := fmt.Sprintf("tmp-%s-%d", g.createDefinitionFinger(def, ""), time.Now().Unix())
+	sourcePath := g.buildSourcePath(finger + ".dot")
+	if err := ioutil.WriteFile(sourcePath, def, os.ModePerm); err != nil {
 		return nil, err
 	}
-	defer os.Remove(sourceFilepath)
+	defer os.Remove(sourcePath)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
-	dotCmd := exec.CommandContext(ctx, conf.DotBin, "-T"+filetype, sourceFilepath)
+	dotCmd := exec.CommandContext(ctx, g.conf.DotBin, "-T"+filetype, sourcePath)
 	stdout, err := dotCmd.Output()
 	if err != nil {
 		return nil, err
@@ -134,44 +153,46 @@ func (g GraphvizController) buildImageAsStream(conf *config.Config, def []byte, 
 	return stdout, nil
 }
 
-func (g GraphvizController) rebuildImage(conf *config.Config, finger string, filetype string) error {
-	outputFilepath := filepath.Join(conf.TempDir, "graphviz", finger+"."+filetype)
-	sourceFilepath := filepath.Join(conf.TempDir, "sources", finger+".dot")
-
-	if !fileExist(sourceFilepath) {
-		return errors.New("source file not exist")
+func (g GraphvizController) rebuildImage(finger string, filetype string) (string, error) {
+	if !g.sourceExisted(finger + ".dot") {
+		return "", errors.New("sourcePath file not exist")
 	}
 
 	// 创建图片文件
-	_ = os.MkdirAll(filepath.Join(conf.TempDir, "graphviz"), os.ModePerm)
-
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
-	dotCmd := exec.CommandContext(ctx, conf.DotBin, "-T"+filetype, "-o", outputFilepath, sourceFilepath)
+	sourcePath := g.buildSourcePath(finger + ".dot")
+	targetPath := g.buildTargetPath(fmt.Sprintf("%s.%s", finger, filetype))
+
+	dotCmd := exec.CommandContext(ctx, g.conf.DotBin, "-T"+filetype, "-o", targetPath, sourcePath)
 	stdout, err := dotCmd.Output()
 	if err != nil {
-		_ = os.Remove(sourceFilepath)
-		return err
+		_ = os.Remove(sourcePath)
+		return "", err
 	}
 
 	if log.DebugEnabled() {
 		log.Debugf("dot command output: %s", stdout)
 	}
 
-	return nil
+	return fmt.Sprintf("%s.%s", finger, filetype), nil
 }
 
-func (g GraphvizController) getImage(ctx web.Context, conf *config.Config) web.Response {
+func (g GraphvizController) LoadImage(ctx web.Context) web.Response {
 	id := ctx.PathVar("id")
 	segs := strings.SplitN(id, ".", 2)
 	if len(segs) != 2 {
 		return ctx.JSONError("invalid file", http.StatusUnprocessableEntity)
 	}
 
-	destFilepath := filepath.Join(conf.TempDir, "graphviz", id)
-	if !fileExist(destFilepath) {
-		if err := g.rebuildImage(conf, segs[0], segs[1]); err != nil {
+	finger, fileType := segs[0], segs[1]
+	sourcePath := g.buildSourcePath(finger + ".dot")
+	targetPath := g.buildTargetPath(id)
+
+	if fileModTs(targetPath) < fileModTs(sourcePath) {
+		_, err := g.rebuildImage(finger, fileType)
+		if err != nil {
 			return ctx.JSONError(err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -198,4 +219,20 @@ func in(val string, items []string) bool {
 	}
 
 	return false
+}
+
+func fileModTs(path string) int64 {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0
+	}
+
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return 0
+	}
+
+	return fi.ModTime().Unix()
 }
