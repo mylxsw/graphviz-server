@@ -29,12 +29,47 @@ func NewGraphvizController(cc container.Container) web.Controller {
 func (g GraphvizController) Register(router *web.Router) {
 	router.Group("/graphviz", func(router *web.Router) {
 		router.Post("/", g.createImageDef)
+		router.Get("/realtime/", g.realTimeImageCreate)
+		router.Post("/realtime/", g.realTimeImageCreate)
 	})
 
 	router.Get("/preview/{id}", g.getImage)
 }
 
 var supportFileTypes = []string{"svg", "svgz", "webp", "png", "bmp", "jpg", "jpeg", "pdf", "gif"}
+
+func (g GraphvizController) realTimeImageCreate(ctx web.Context, conf *config.Config) web.Response {
+	fileType := strings.ToLower(ctx.InputWithDefault("type", "svg"))
+	if !in(fileType, supportFileTypes) {
+		return ctx.JSONError(fmt.Sprintf("invalid type, only support: %s", strings.Join(supportFileTypes, ",")), http.StatusUnprocessableEntity)
+	}
+
+	var def []byte
+	if ctx.IsGet() {
+		def = []byte(strings.TrimSpace(ctx.Input("def")))
+	} else {
+		def = ctx.Body()
+	}
+
+	stream, err := g.buildImageAsStream(conf, def, fileType)
+	if err != nil {
+		return ctx.JSONError(fmt.Sprintf("can not create image from definition: %v", err), http.StatusInternalServerError)
+	}
+
+	return ctx.Raw(func(w http.ResponseWriter) {
+		switch fileType {
+		case "svg", "svgz":
+			w.Header().Set("Content-Type", "image/svg+xml")
+		case "jpg", "jpeg":
+			w.Header().Set("Content-Type", "image/jpeg")
+		case "pdf":
+			w.Header().Set("Content-Type", "application/pdf")
+		default:
+			w.Header().Set("Content-Type", "image/"+fileType)
+		}
+		_, _ = w.Write(stream)
+	})
+}
 
 func (g GraphvizController) createImageDef(ctx web.Context, conf *config.Config) web.Response {
 	graphDef := ctx.Body()
@@ -77,6 +112,26 @@ func (g GraphvizController) rebuildImageFromDefinition(conf *config.Config, defi
 	}
 
 	return finger, nil
+}
+
+func (g GraphvizController) buildImageAsStream(conf *config.Config, def []byte, filetype string) ([]byte, error) {
+	finger := fmt.Sprintf("%x", md5.Sum(def))
+	sourceFilepath := filepath.Join(conf.TempDir, "sources", fmt.Sprintf("%s-%d.dot", finger, time.Now().Unix()))
+	if err := ioutil.WriteFile(sourceFilepath, def, os.ModePerm); err != nil {
+		return nil, err
+	}
+	defer os.Remove(sourceFilepath)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
+	defer cancel()
+
+	dotCmd := exec.CommandContext(ctx, conf.DotBin, "-T"+filetype, sourceFilepath)
+	stdout, err := dotCmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return stdout, nil
 }
 
 func (g GraphvizController) rebuildImage(conf *config.Config, finger string, filetype string) error {

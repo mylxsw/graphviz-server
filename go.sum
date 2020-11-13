@@ -203,6 +203,8 @@ github.com/mylxsw/container v0.0.0-20200525090619-01208c02b074 h1:8OLLLh/tG7M5kQ
 github.com/mylxsw/container v0.0.0-20200525090619-01208c02b074/go.mod h1:UDbF8EtqT7jB0yDc6g9u4P8ORvw4RbFot1QputpgR5U=
 github.com/mylxsw/glacier v0.0.0-20201109074739-c3205f7faac3 h1:s9iAbD8YanxG6rn1xTqTDZB8u9PINnxdKglqIQTxJtc=
 github.com/mylxsw/glacier v0.0.0-20201109074739-c3205f7faac3/go.mod h1:704aHbgS7VTqwdZCq+RbUu5O3+HKJMjp0RxOV2U+PGw=
+github.com/mylxsw/glacier v0.0.0-20201113013830-088b50a2594f h1:PKl081O9AlhvovGTr7NucpVavlSBucWHedt3fIX+85w=
+github.com/mylxsw/glacier v0.0.0-20201113013830-088b50a2594f/go.mod h1:704aHbgS7VTqwdZCq+RbUu5O3+HKJMjp0RxOV2U+PGw=
 github.com/mylxsw/graceful v0.0.0-20200605063420-3c53968cf134 h1:uYT1HZC8kyKGtAR/Los/azrD8uROgkM8HHuhN2bzPmI=
 github.com/mylxsw/graceful v0.0.0-20200605063420-3c53968cf134/go.mod h1:Skt4GaATnUdq3MArrHK32UsSC9tq8GB0ZToWkF420Os=
 github.com/nats-io/jwt v0.3.0/go.mod h1:fRYCDE99xlTsqUzISS1Bi75UBJ6ljOJQOAAu5VglpSg=
