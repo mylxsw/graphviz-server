@@ -15,4 +15,7 @@ esc-build:
 docker-build:
 	docker build -t mylxsw/graphviz-server .
 
+docker-push:
+	sh ./docker-push.sh
+
 .PHONY: run build docker-build esc-build
