@@ -34,6 +34,7 @@ func NewGraphvizController(cc container.Container) web.Controller {
 func (g GraphvizController) Register(router *web.Router) {
 	router.Group("/graphviz", func(router *web.Router) {
 		router.Post("/definition", g.AddImageDefinition)
+		router.Get("/definition", g.GetDefinition)
 		router.Any("/stream", g.RenderImageAsStream)
 	})
 
@@ -49,12 +50,7 @@ func (g GraphvizController) RenderImageAsStream(ctx web.Context) web.Response {
 		return ctx.JSONError(fmt.Sprintf("invalid type, only support: %s", strings.Join(supportFileTypes, ",")), http.StatusUnprocessableEntity)
 	}
 
-	var def []byte
-	if ctx.IsGet() {
-		def = []byte(strings.TrimSpace(ctx.Input("def")))
-	} else {
-		def = ctx.Body()
-	}
+	var def = []byte(strings.TrimSpace(ctx.Input("def")))
 
 	stream, err := g.buildImageAsStream(def, fileType)
 	if err != nil {
@@ -76,20 +72,51 @@ func (g GraphvizController) RenderImageAsStream(ctx web.Context) web.Response {
 	})
 }
 
+// GetDefinition 获取 id 对应的图片定义
+func (g GraphvizController) GetDefinition(ctx web.Context) web.Response {
+	id := strings.TrimSpace(ctx.Input("id"))
+	if id == "" {
+		return ctx.JSONError("no id provided", http.StatusUnprocessableEntity)
+	}
+
+	sourcePath := g.buildSourcePath(id + ".dot")
+	if !fileExist(sourcePath) {
+		return ctx.JSONError("no such file", http.StatusUnprocessableEntity)
+	}
+
+	file, err := ioutil.ReadFile(sourcePath)
+	if err != nil {
+		return ctx.JSONError(err.Error(), http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(web.M{
+		"id":  id,
+		"def": string(file),
+	})
+}
+
 // AddImageDefinition 添加图片定义
 func (g GraphvizController) AddImageDefinition(ctx web.Context) web.Response {
-	graphDef := ctx.Body()
+	graphDef := strings.TrimSpace(ctx.Input("def"))
+	if graphDef == "" {
+		return ctx.JSONError("invalid graphviz def", http.StatusUnprocessableEntity)
+	}
+
+	if !strings.HasPrefix(graphDef, "strict digraph") && !strings.HasPrefix(graphDef, "digraph") {
+		return ctx.JSONError("invalid graphviz def", http.StatusUnprocessableEntity)
+	}
+
 	fileType := strings.ToLower(ctx.InputWithDefault("type", "svg"))
 	if !in(fileType, supportFileTypes) {
 		return ctx.JSONError(fmt.Sprintf("invalid type, only support: %s", strings.Join(supportFileTypes, ",")), http.StatusUnprocessableEntity)
 	}
 
-	fileID, err := g.updateImageDefinition(strings.TrimSpace(ctx.Input("id")), graphDef, fileType)
+	fileID, err := g.updateImageDefinition(strings.TrimSpace(ctx.Input("id")), []byte(graphDef), fileType)
 	if err != nil {
 		return ctx.JSONError(err.Error(), http.StatusInternalServerError)
 	}
 
-	imagePreviewURL := fmt.Sprintf("/api/preview/%s", fileID)
+	imagePreviewURL := fmt.Sprintf("/api/preview/%s.%s", fileID, fileType)
 
 	resp := web.M{"preview": imagePreviewURL, "id": fileID}
 	if fileType == "svg" {
@@ -176,7 +203,7 @@ func (g GraphvizController) rebuildImage(finger string, filetype string) (string
 		log.Debugf("dot command output: %s", stdout)
 	}
 
-	return fmt.Sprintf("%s.%s", finger, filetype), nil
+	return finger, nil
 }
 
 func (g GraphvizController) LoadImage(ctx web.Context) web.Response {
