@@ -7,7 +7,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mylxsw/container"
 	"github.com/mylxsw/glacier/infra"
+	"github.com/mylxsw/graphviz-server/assets"
 	"github.com/mylxsw/graphviz-server/config"
+	"github.com/mylxsw/graphviz-server/dashboard"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -25,7 +27,8 @@ func (s ServiceProvider) Boot(app infra.Glacier) {
 			router.PathPrefix("/health").Handler(HealthCheck{})
 
 			router.PathPrefix("/resources").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir(filepath.Join(conf.TempDir, "graphviz")))))
-			router.PathPrefix("/dashboard").Handler(http.StripPrefix("/dashboard", http.FileServer(FS(conf.Debug))))
+			router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(assets.FS(conf.Debug))))
+			router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(dashboard.FS(conf.Debug))))
 		})
 	})
 }

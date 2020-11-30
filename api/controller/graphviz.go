@@ -120,8 +120,8 @@ func (g GraphvizController) AddImageDefinition(ctx web.Context) web.Response {
 
 	resp := web.M{"preview": imagePreviewURL, "id": fileID}
 	if fileType == "svg" {
-		resp["preview-interact"] = fmt.Sprintf("/dashboard/index.html?url=%s", imagePreviewURL)
-		resp["preview-sketch"] = fmt.Sprintf("/dashboard/index.html?url=%s&t=sketch&roughness=0", imagePreviewURL)
+		resp["preview-interact"] = fmt.Sprintf("/assets/index.html?url=%s", imagePreviewURL)
+		resp["preview-sketch"] = fmt.Sprintf("/assets/index.html?url=%s&t=sketch&roughness=0", imagePreviewURL)
 	}
 
 	return ctx.JSON(resp)

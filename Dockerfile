@@ -6,6 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN esc -pkg api -o api/static.go -prefix=assets assets
+RUN esc -pkg dashboard -o dashboard/dashboard.go -prefix=dashboard/dist dashboard/dist
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-s -w -X main.Version=latest -X main.GitCommit=24130b9704a9cd398932c3f0d2262b8568e02e65' -o graphviz-server main.go
 
 FROM ubuntu:20.10
