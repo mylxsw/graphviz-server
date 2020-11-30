@@ -30,7 +30,7 @@
             <b-card header="Preview" v-if="resp !== null" class="mt-3">
                 <b-overlay :show="show_overlay" rounded="sm">
                     <b-table striped hover :items="data_table" :fields="data_table_header"></b-table>
-                    <b-img :src="$store.getters.serverUrl + resp.preview"></b-img>
+                    <b-img :src="$store.getters.serverUrl + resp.preview" style="max-width: 100%;"></b-img>
                 </b-overlay>
             </b-card>
         </b-col>
