@@ -2,7 +2,7 @@
     <b-row class="mb-5 main-box">
         <b-col>
             <b-card-group class="mb-3">
-                <b-card header="浏览器">
+                <b-card header="Browser">
                     <b-form @submit="updateBrowserSetting">
                         <b-form-group horizontal id="server_url" label="Server Address*" label-for="server_url_input">
                             <b-form-input id="server_url_input" type="text" v-model="server_url" placeholder="http://localhost:8819"></b-form-input>
