@@ -71,6 +71,9 @@
             loadMore() {
 
             },
+            previewURL(value) {
+                return this.$store.getters.serverUrl.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
+            },
             onSubmit(evt) {
                 evt.preventDefault();
                 this.show_overlay = true;
@@ -83,10 +86,15 @@
                     for (let k in this.resp) {
                         let value = this.resp[k];
                         if (k.startsWith('preview')) {
-                            value = this.$store.getters.serverUrl.replace(/\/+$/, '') + '/' + value.replace(/^\/+/, '');
+                            value = this.previewURL(value);
                         }
 
                         this.data_table.push({key: k, value: value});
+                        if (k === 'preview-interact') {
+                            this.data_table.push({key: 'Markdown(Interact)', value: '[![' +  resp.data.id + '](' + this.previewURL(resp.data.preview) + ')](' + value + ')'});
+                        } else if (k === 'preview') {
+                            this.data_table.push({key: 'Markdown', value: '![' +  resp.data.id + '](' + this.previewURL(resp.data.preview) + ')'});
+                        }
                     }
                     this.show_overlay = false;
                 }).catch(error => {

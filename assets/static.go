@@ -344,22 +344,22 @@ zifjy+vR+fywz7S4iDJ+zrNFymLVuTFclvsoWdOjjOD3vvnFSND7vwAAAP//d4ut2N49AAA=
 	"/index.html": {
 		name:    "index.html",
 		local:   "assets/index.html",
-		size:    1726,
-		modtime: 1605198819,
+		size:    1717,
+		modtime: 1606710773,
 		compressed: `
-H4sIAAAAAAAC/7RVT4/jNBQ/p5/CCiMlkVq723JhNu0NcQKBRuKy2oNrvybOuHGwX9IpaC5zAXHhgtB+
-AC4IiSPSLmg/DTuFb4Hyt+0uFRo05Ob3nn+/3/v5xSZxihu9HHlxClwuR6T7YlSoYXn1+UfkUwuVgm3M
-2tDI82Kt8mtiQS98hzsNLgVAn6QW1gs/RSzcJWNarRwVMs8czQEZbhUi2MnKGHRoecHmdE7fZ8I5NsSo
-cM7/VwYmuUtXhlvJEsuLtFJfTlyVNFB9gLoq6dFi1vbmxSsjdw28VBVRcuGr3KEtBSqTt8ReXCyfULK/
-e/nm69/+/PZuf/fyr59f/PHql/sXr/c/vopZ0VfNKLlK1RonTlijNdn//tP996+PCuaUfOgEefPdD/e/
-ftOCdNmYSVWd6Ghk+8suUWecsKpAgrsCFj7CDbKMV7yN+sRZcdbp7IsS7I7N6IzOuwXNXA3e7l4+Bvxk
-Y0oH2xRAszl9Qj/omQ7x/4FUGG0sm9EpnfZ8Tegxqc4NanY8p/+F79zYZq7v5WR4TymOOE7Et7qFNqVc
-a26BCrNhPOM3TVvMmjJJaeaaM5oOy38W/zYwzZwErSrb+JKkLOF5gtwwdw0oUrXeMakcHpZ0o/Lzuh/i
-zar2BmwFDz3a5Yh4nncRSiPKDeQYUQtc7sJ1mTd/eRh91VR4bqtQpCRMAD+rzb9Cq/IkDDCIItLVeII7
-IEHbX3DZBb2LMHjv+OIIIpoqCWH0dNQV0ATwHeTS6iAak7zUekwGPZIjrwnbnZ4GJMLkyFUOlixIzdU4
-Egzo3pCn9d09tEq5NAV+YiSEF6HvqsQfkwb92fR5dNjddvNxXTYAPZs+H5O39TbDkoNzwWH37Zj4Nxvt
-R097M1YW+HWXlrDmpcbLrljlCJYLbLj6Nt7laXzpGG6HB6j+bpvo0eHHrL3BY9a+Wn8HAAD//8eLM4e+
-BgAA
+H4sIAAAAAAAC/7RVzW7kRBA+e56iZSLZlibdsxkuZD1zQ5xAoEhcVnvo6a6x2+lxD11lJwPKJRcQFy4I
+7QNwQUgckXZB+zRsAm+B/JuZ3Y34Uda3rqr+vq++LnezNKeNXU6CNAeplxPWfykZsrA8+/wj9qmH2sBF
+KrrQJAhSa8pz5sEuQqSdBcwBKGS5h/UizIm2eCqENSvkSpcF8hJI0IUhAn+8co6QvNyKOZ/z94VCFGOM
+K8TwHxmERARCkXm5zWvz5THWWYszBDjW2QCViq6xIF05vWuxtamZ0YvQlEi+UmRc2bEG6Xb5iLPb6+ev
+vv7tz2+vb6+f//Xzsz9e/HLz7OXtjy9SsR2qTjg7y82ajlF5Zy27/f2nm+9f7hXMOfsQFXv13Q83v37T
+gfTZVGhTH+hoZYfLPtFkUHmzJUa7LSxCgksShaxlFw0ZenWvzcUXFfidOOEnfN4veIENeLd7+RDwxxtX
+IVzkAFbM+SP+wcB0F38HpMpZ58UJn/HZwNeGHpLqvikt9of0//C9dWYLHBo5mNxD/D2CA+WdaGVdpddW
+euDKbYQs5GXbk/CuynJeYHtAs3H5duWvA/MCNVhT+9aULBeZLDOSTuA5kMrNeie0Qbpb8o0p79f9r41Z
+NcaAr+G/HupywoIgOIq1U9UGSkq4B6l38boq2/87Tr5qKwK8MKRyFmdAnzXOn5E3ZRZHFCUJ62sCJRFY
+1DUXnfbB4CiO3tu/MqKE50ZDnDye9AU8A3oDufI2SqasrKydslGPliQbwm5nYIGYciVJU4JnC9ZwtY5E
+I3ow5nlzZY+tcqndlj5xGuKjOMQ6C6esRX8ye5rc7e66+bgpG4GezJ5O2et620kpATG62301ZeHlxobJ
+48GMlQd53qc1rGVl6bQvNiWBl4parqGNN3laX3qGq/Hdab6rNrp3+Kno7u5UdI/V3wEAAP//+UpSu7UG
+AAA=
 `,
 	},
 
@@ -367,7 +367,7 @@ BgAA
 		name:    "static.go",
 		local:   "assets/static.go",
 		size:    0,
-		modtime: 1606710670,
+		modtime: 1606967911,
 		compressed: `
 H4sIAAAAAAAC/wEAAP//AAAAAAAAAAA=
 `,
